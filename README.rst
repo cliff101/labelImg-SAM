@@ -34,6 +34,8 @@ It is written in Python and uses Qt for its graphical interface.
 Annotations are saved as XML files in PASCAL VOC format, the format used
 by `ImageNet <http://www.image-net.org/>`__.  Besides, it also supports YOLO and CreateML formats.
 
+LabelImg integrates the Segment Anything Model (SAM) for automatic object segmentation, helping to create more precise annotations with less manual effort.
+
 .. image:: https://raw.githubusercontent.com/tzutalin/labelImg/master/demo/demo3.jpg
      :alt: Demo Image
 
@@ -214,6 +216,25 @@ Note:
 
 - When saving as YOLO format, "difficult" flag is discarded.
 
+Using SAM (Segment Anything Model)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+LabelImg supports the Segment Anything Model (SAM) for automatic segmentation. This feature helps create more precise annotations by automatically refining the bounding boxes.
+
+To use SAM:
+
+1. Press ``Ctrl+Shift+V`` to cycle through different SAM states:
+   - OFF: SAM is disabled
+   - VIT_B: Using the base SAM model
+   - VIT_L: Using the large SAM model
+   - VIT_H: Using the huge SAM model
+
+2. When drawing a bounding box, SAM will automatically refine the points to better fit the object.
+
+3. The current SAM state is shown in the toolbar next to the save format option.
+
+Note that using larger SAM models (VIT_L, VIT_H) provides more accurate segmentation but requires more computational resources.
+
 Create pre-defined classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -262,6 +283,8 @@ Hotkeys
 | Ctrl--             | Zoom out                                   |
 +--------------------+--------------------------------------------+
 | ↑→↓←               | Keyboard arrows to move selected rect box  |
++--------------------+--------------------------------------------+
+| Ctrl+Shift+V       | Cycle through SAM model states (OFF/B/L/H) |
 +--------------------+--------------------------------------------+
 
 **Verify Image:**

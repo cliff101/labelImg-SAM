@@ -24,6 +24,7 @@ except ImportError:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
 
+from libs.sam import SAM, VIT_STATE
 from libs.combobox import ComboBox
 from libs.default_label_combobox import DefaultLabelComboBox
 from libs.resources import *
@@ -91,6 +92,9 @@ class MainWindow(QMainWindow, WindowMixin):
         # Save as Pascal voc xml
         self.default_save_dir = default_save_dir
         self.label_file_format = settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.PASCAL_VOC)
+
+        # Get SAM State
+        self.sam_state = settings.get(SAM_STATE, VIT_STATE.OFF)
 
         # For loading all image under a directory
         self.m_img_list = []
@@ -252,6 +256,26 @@ class MainWindow(QMainWindow, WindowMixin):
                 return '&YOLO', 'format_yolo'
             elif format == LabelFileFormat.CREATE_ML:
                 return '&CreateML', 'format_createml'
+        
+        def get_samstete_meta(state):
+            """
+            returns a tuple containing (title, icon_name) of the selected state
+            """
+            if state == VIT_STATE.OFF:
+                return '&OFF', 'SAM_OFF'
+            elif state == VIT_STATE.VIT_B:
+                return '&VIT_B', 'SAM_B'
+            elif state == VIT_STATE.VIT_L:
+                return '&VIT_L', 'SAM_L'
+            elif state == VIT_STATE.VIT_H:
+                return '&VIT_H', 'SAM_H'
+        
+        self.SAM = SAM()
+        self.SAM.change_sam_model(self.sam_state)
+        sam_state_action = action(get_samstete_meta(self.sam_state)[0],
+                             self.change_sam_status, 'Ctrl+Shift+V',
+                             get_samstete_meta(self.sam_state)[1],
+                             get_str('changeSAMState'), enabled=True)
 
         save_format = action(get_format_meta(self.label_file_format)[0],
                              self.change_format, 'Ctrl+Y',
@@ -380,7 +404,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.draw_squares_option.triggered.connect(self.toggle_draw_square)
 
         # Store actions for further handling.
-        self.actions = Struct(save=save, save_format=save_format, saveAs=save_as, open=open, close=close, resetAll=reset_all, deleteImg=delete_image,
+        self.actions = Struct(save=save, save_format=save_format, sam_state_action=sam_state_action, saveAs=save_as, open=open, close=close, resetAll=reset_all, deleteImg=delete_image,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
                               createMode=create_mode, editMode=edit_mode, advancedMode=advanced_mode,
                               shapeLineColor=shape_line_color, shapeFillColor=shape_fill_color,
@@ -427,7 +451,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.display_label_option.triggered.connect(self.toggle_paint_labels_option)
 
         add_actions(self.menus.file,
-                    (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, save_as, close, reset_all, delete_image, quit))
+                    (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, sam_state_action, save_as, close, reset_all, delete_image, quit))
         add_actions(self.menus.help, (help_default, show_info, show_shortcut))
         add_actions(self.menus.view, (
             self.auto_saving,
@@ -449,12 +473,12 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, None, create, copy, delete, None,
+            open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, sam_state_action, None, create, copy, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width, None,
             light_brighten, light, light_darken, light_org)
 
         self.actions.advanced = (
-            open, open_dir, change_save_dir, open_next_image, open_prev_image, save, save_format, None,
+            open, open_dir, change_save_dir, open_next_image, open_prev_image, save, save_format, sam_state_action, None,
             create_mode, edit_mode, None,
             hide_all, show_all)
 
@@ -578,6 +602,43 @@ class MainWindow(QMainWindow, WindowMixin):
         else:
             raise ValueError('Unknown label file format.')
         self.set_dirty()
+    
+    def set_sam_statue(self, sam_state):
+        if sam_state == SETTING_SAM_OFF:
+            self.actions.sam_state_action.setText(SETTING_SAM_OFF)
+            self.actions.sam_state_action.setIcon(new_icon("SAM_OFF"))
+            self.sam_state = VIT_STATE.OFF
+            self.SAM.change_sam_model(self.sam_state)
+        
+        elif sam_state == SETTING_SAM_VIT_B:
+            self.actions.sam_state_action.setText(SETTING_SAM_VIT_B)
+            self.actions.sam_state_action.setIcon(new_icon("SAM_B"))
+            self.sam_state = VIT_STATE.VIT_B
+            self.SAM.change_sam_model(self.sam_state)
+
+        elif sam_state == SETTING_SAM_VIT_L:
+            self.actions.sam_state_action.setText(SETTING_SAM_VIT_L)
+            self.actions.sam_state_action.setIcon(new_icon("SAM_L"))
+            self.sam_state = VIT_STATE.VIT_L
+            self.SAM.change_sam_model(self.sam_state)
+
+        elif sam_state == SETTING_SAM_VIT_H:
+            self.actions.sam_state_action.setText(SETTING_SAM_VIT_H)
+            self.actions.sam_state_action.setIcon(new_icon("SAM_H"))
+            self.sam_state = VIT_STATE.VIT_H
+            self.SAM.change_sam_model(self.sam_state)
+
+    def change_sam_status(self):
+        if self.sam_state == VIT_STATE.OFF:
+            self.set_sam_statue(SETTING_SAM_VIT_B)
+        elif self.sam_state == VIT_STATE.VIT_B:
+            self.set_sam_statue(SETTING_SAM_VIT_L)
+        elif self.sam_state == VIT_STATE.VIT_L:
+            self.set_sam_statue(SETTING_SAM_VIT_H)
+        elif self.sam_state == VIT_STATE.VIT_H:
+            self.set_sam_statue(SETTING_SAM_OFF)
+        else:
+            raise ValueError('Unknown label file format.')
 
     def no_shapes(self):
         return not self.items_to_shapes
@@ -980,6 +1041,9 @@ class MainWindow(QMainWindow, WindowMixin):
             self.prev_label_text = text
             generate_color = generate_color_by_text(text)
             shape = self.canvas.set_last_label(text, generate_color, generate_color)
+
+            shape.points = self.SAM.predict(shape.points) # apply SAM prediction
+
             self.add_label(shape)
             if self.beginner():  # Switch to edit mode.
                 self.canvas.set_editing(True)
@@ -1096,6 +1160,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.setEnabled(False)
         if file_path is None:
             file_path = self.settings.get(SETTING_FILENAME)
+        self.SAM.load_image_path(file_path)
         # Make sure that filePath is a regular python string, rather than QString
         file_path = ustr(file_path)
 
