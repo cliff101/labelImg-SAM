@@ -235,6 +235,26 @@ To use SAM:
 
 Note that using larger SAM models (VIT_L, VIT_H) provides more accurate segmentation but requires more computational resources.
 
+GPU Acceleration for SAM
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To enable GPU acceleration for SAM (strongly recommended for better performance):
+
+1. Install PyTorch with GPU support following the official PyTorch installation guide:
+   
+   * Visit the `PyTorch Installation page <https://pytorch.org/get-started/locally/>`__
+   * Select your preferences (OS, package manager, compute platform)
+   * Follow the provided installation instructions for your specific environment
+
+2. Verify your installation has GPU support:
+
+   .. code:: python
+
+       import torch
+       print(torch.cuda.is_available())  # Should print True for NVIDIA GPUs
+       # Or for Intel GPUs
+       print(torch.xpu.is_available())  # Should print True for Intel GPUs
+
 Create pre-defined classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
